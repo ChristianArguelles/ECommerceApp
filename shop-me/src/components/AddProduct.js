@@ -1,16 +1,24 @@
 import axios from 'axios';
 import React, { useState } from 'react';
-import { Button, Container, Form } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { Alert, Button, Container, Form } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 
 function AddProduct() {
     const [name, setName] = useState('');
     const [price, setPrice] = useState('');
     const [stocks, setStocks] = useState('');
-    const navigate = useNavigate(); // Initialize useNavigate
+    const [error, setError] = useState('');
+    const navigate = useNavigate();
 
     const handleSubmit = (event) => {
         event.preventDefault();
+
+        // Check if all fields are filled
+        if (!name || !price || !stocks) {
+            setError('All fields must be filled out.');
+            return; // Prevent form submission if fields are missing
+        }
+
         const newProduct = { name, price, stocks };
 
         axios.post('http://localhost:8000/api/products', newProduct)
@@ -19,16 +27,19 @@ function AddProduct() {
                 setName('');
                 setPrice('');
                 setStocks('');
+                setError('');
                 navigate('/'); // Redirect to product list after successful submission
             })
             .catch(error => {
                 console.error('Error adding product:', error);
+                setError('An error occurred while adding the product. Please try again.');
             });
     };
 
     return (
         <Container>
             <h1><center>Add Product</center></h1>
+            {error && <Alert variant="danger" className="mt-3">{error}</Alert>} {/* Display error message */}
             <Form onSubmit={handleSubmit}>
                 <Form.Group controlId="formName">
                     <Form.Label>Product Name</Form.Label>
