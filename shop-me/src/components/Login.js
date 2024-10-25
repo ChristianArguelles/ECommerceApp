@@ -1,35 +1,31 @@
 // src/components/Login.js
-import axios from 'axios';
 import React, { useState } from 'react';
 import { Alert, Button, Container, Form } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import { loginUser } from '../mockUserData'; // Adjust the import path
 
-function Login() {
+function Login({ setIsLoggedIn }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    const handleSubmit = async (event) => {
+    const handleSubmit = (event) => {
         event.preventDefault();
-        
-        const user = { email, password };
-        
         try {
-            const response = await axios.post('http://localhost:8000/api/login', user);
-            console.log('Logged in:', response.data);
-            // Handle login success, e.g., store token and navigate
-            localStorage.setItem('token', response.data.token); // Store JWT token if applicable
-            navigate('/'); // Redirect to product list after successful login
+            const user = loginUser(email, password);
+            localStorage.setItem('token', 'your_token'); // Simulate storing a token
+            setIsLoggedIn(true); // Set logged-in state to true
+            console.log('Login successful for', user.email);
+            navigate('/'); // Redirect to the main application
         } catch (error) {
-            console.error('Error logging in:', error);
-            setError('Invalid email or password. Please try again.');
+            setError(error.message); // Set the error message from the login attempt
         }
     };
 
     return (
         <Container>
-            <h1><center>Login</center></h1>
+            <h1 className="text-center">Login</h1>
             {error && <Alert variant="danger" className="mt-3">{error}</Alert>}
             <Form onSubmit={handleSubmit}>
                 <Form.Group controlId="formEmail">

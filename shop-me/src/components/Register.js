@@ -1,36 +1,43 @@
 // src/components/Register.js
-import axios from 'axios';
 import React, { useState } from 'react';
 import { Alert, Button, Container, Form } from 'react-bootstrap';
+import { registerUser } from '../mockUserData'; // Adjust the import path
 import { useNavigate } from 'react-router-dom';
 
 function Register() {
+    const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    const handleSubmit = async (event) => {
+    const handleSubmit = (event) => {
         event.preventDefault();
-        
-        const newUser = { email, password };
-
         try {
-            await axios.post('http://localhost:8000/api/register', newUser);
-            console.log('Registration successful');
-            navigate('/login'); // Redirect to login after successful registration
+            registerUser({ name, email, password });
+            console.log('Registration successful for', email);
+            navigate('/login'); // Redirect to the login page after registration
         } catch (error) {
-            console.error('Error registering:', error);
-            setError('Registration failed. Please try again.');
+            setError(error.message); // Set the error message from the registration attempt
         }
     };
 
     return (
         <Container>
-            <h1><center>Register</center></h1>
+            <h1 className="text-center">Register</h1>
             {error && <Alert variant="danger" className="mt-3">{error}</Alert>}
             <Form onSubmit={handleSubmit}>
-                <Form.Group controlId="formEmail">
+                <Form.Group controlId="formName">
+                    <Form.Label>Name</Form.Label>
+                    <Form.Control 
+                        type="text" 
+                        placeholder="Enter name" 
+                        value={name} 
+                        onChange={(e) => setName(e.target.value)} 
+                        required
+                    />
+                </Form.Group>
+                <Form.Group controlId="formEmail" className="mt-3">
                     <Form.Label>Email</Form.Label>
                     <Form.Control 
                         type="email" 

@@ -1,16 +1,25 @@
-// App.js
+// src/App.js
 import 'bootstrap/dist/css/bootstrap.min.css';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Container, Form, Nav, Navbar } from 'react-bootstrap';
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import AddProduct from './components/AddProduct';
 import ViewProduct from './components/ViewProduct';
-import UpdateProduct from './components/UpdateProduct'; // New component for updating products
-import Login from './components/Login'; // Import Login component
-import Register from './components/Register'; // Import Register component
+import UpdateProduct from './components/UpdateProduct';
+import Login from './components/Login';
+import Register from './components/Register';
 
 function App() {
     const [searchTerm, setSearchTerm] = useState('');
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    // Check if the user is logged in when the component mounts
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            setIsLoggedIn(true); // User is logged in
+        }
+    }, []);
 
     const handleSearchChange = (event) => {
         setSearchTerm(event.target.value);
@@ -18,8 +27,10 @@ function App() {
 
     const handleLogout = () => {
         localStorage.removeItem('token'); // Clear token on logout
+        setIsLoggedIn(false); // Update logged-in state
         console.log('Logged out');
     };
+
     return (
         <Router>
             <div>
@@ -29,10 +40,19 @@ function App() {
                         <Navbar.Toggle aria-controls="basic-navbar-nav" />
                         <Navbar.Collapse id="basic-navbar-nav">
                             <Nav className="me-auto">
-                                <Nav.Link href="/">Product List</Nav.Link>
-                                <Nav.Link href="/add">Add Product</Nav.Link>
-                                <Nav.Link href="/login">Login</Nav.Link> {/* Link to login */}
-                                <Nav.Link href="/register">Register</Nav.Link> {/* Link to register */}
+                                {isLoggedIn && (
+                                    <>
+                                        <Nav.Link href="/">Product List</Nav.Link>
+                                        <Nav.Link href="/add">Add Product</Nav.Link>
+                                        <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
+                                    </>
+                                )}
+                                {!isLoggedIn && (
+                                    <>
+                                        <Nav.Link href="/login">Login</Nav.Link>
+                                        <Nav.Link href="/register">Register</Nav.Link>
+                                    </>
+                                )}
                             </Nav>
                             <Form className="d-flex me-2">
                                 <Form.Control
@@ -45,9 +65,6 @@ function App() {
                                 />
                                 <Button variant="outline-success">Search</Button>
                             </Form>
-                            <Nav>
-                                <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
-                            </Nav>
                         </Navbar.Collapse>
                     </Container>
                 </Navbar>
@@ -55,8 +72,8 @@ function App() {
                     <Route path="/" element={<ViewProduct />} />
                     <Route path="/add" element={<AddProduct />} />
                     <Route path="/update/:id" element={<UpdateProduct />} />
-                    <Route path="/login" element={<Login />} /> {/* Route for login */}
-                    <Route path="/register" element={<Register />} /> {/* Route for registration */}
+                    <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} /> {/* Pass setIsLoggedIn as prop */}
+                    <Route path="/register" element={<Register />} />
                 </Routes>
             </div>
         </Router>
