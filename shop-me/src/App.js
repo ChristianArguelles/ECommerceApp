@@ -2,7 +2,7 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import React, { useState, useEffect } from 'react';
 import { Button, Container, Form, Nav, Navbar } from 'react-bootstrap';
-import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import { Route, BrowserRouter as Router, Routes, useLocation } from 'react-router-dom';
 import AddProduct from './components/AddProduct';
 import ViewProduct from './components/ViewProduct';
 import UpdateProduct from './components/UpdateProduct';
@@ -33,27 +33,45 @@ function App() {
 
     return (
         <Router>
-            <div>
-                <Navbar bg="dark" variant="dark" expand="lg">
-                    <Container>
-                        <Navbar.Brand href="/">SHOP ME</Navbar.Brand>
-                        <Navbar.Toggle aria-controls="basic-navbar-nav" />
-                        <Navbar.Collapse id="basic-navbar-nav">
-                            <Nav className="me-auto">
-                                {isLoggedIn && (
-                                    <>
-                                        <Nav.Link href="/">Product List</Nav.Link>
-                                        <Nav.Link href="/add">Add Product</Nav.Link>
-                                        <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
-                                    </>
-                                )}
-                                {!isLoggedIn && (
-                                    <>
-                                        <Nav.Link href="/login">Login</Nav.Link>
-                                        <Nav.Link href="/register">Register</Nav.Link>
-                                    </>
-                                )}
-                            </Nav>
+            <Content 
+                searchTerm={searchTerm}
+                handleSearchChange={handleSearchChange}
+                isLoggedIn={isLoggedIn}
+                handleLogout={handleLogout}
+                setIsLoggedIn={setIsLoggedIn}
+            />
+        </Router>
+    );
+}
+
+function Content({ searchTerm, handleSearchChange, isLoggedIn, handleLogout, setIsLoggedIn }) {
+    const location = useLocation(); // Now inside the Router context
+
+    // Determine if the current route is login or register
+    const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+
+    return (
+        <div>
+            <Navbar bg="dark" variant="dark" expand="lg">
+                <Container>
+                    <Navbar.Brand href="/">SHOP ME</Navbar.Brand>
+                    <Navbar.Toggle aria-controls="basic-navbar-nav" />
+                    <Navbar.Collapse id="basic-navbar-nav">
+                        <Nav className="me-auto">
+                            {isLoggedIn && (
+                                <>
+                                    <Nav.Link href="/">Product List</Nav.Link>
+                                    <Nav.Link href="/add">Add Product</Nav.Link>
+                                </>
+                            )}
+                            {!isLoggedIn && (
+                                <>
+                                    <Nav.Link href="/login">Login</Nav.Link>
+                                    <Nav.Link href="/register">Register</Nav.Link>
+                                </>
+                            )}
+                        </Nav>
+                        {!isAuthPage && isLoggedIn && (
                             <Form className="d-flex me-2">
                                 <Form.Control
                                     type="search"
@@ -65,18 +83,29 @@ function App() {
                                 />
                                 <Button variant="outline-success">Search</Button>
                             </Form>
-                        </Navbar.Collapse>
-                    </Container>
-                </Navbar>
-                <Routes>
-                    <Route path="/" element={<ViewProduct />} />
-                    <Route path="/add" element={<AddProduct />} />
-                    <Route path="/update/:id" element={<UpdateProduct />} />
-                    <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} /> {/* Pass setIsLoggedIn as prop */}
-                    <Route path="/register" element={<Register />} />
-                </Routes>
-            </div>
-        </Router>
+                        )}
+                        {isLoggedIn && (
+                            <Nav>
+                                <Button
+                                    onClick={handleLogout}
+                                    className="ms-3"
+                                    variant="danger"
+                                >
+                                    Logout
+                                </Button>
+                            </Nav>
+                        )}
+                    </Navbar.Collapse>
+                </Container>
+            </Navbar>
+            <Routes>
+                <Route path="/" element={isLoggedIn ? <ViewProduct /> : <Login setIsLoggedIn={setIsLoggedIn} />} />
+                <Route path="/add" element={isLoggedIn ? <AddProduct /> : <Login setIsLoggedIn={setIsLoggedIn} />} />
+                <Route path="/update/:id" element={isLoggedIn ? <UpdateProduct /> : <Login setIsLoggedIn={setIsLoggedIn} />} />
+                <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
+                <Route path="/register" element={<Register />} />
+            </Routes>
+        </div>
     );
 }
 
