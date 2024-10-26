@@ -13,10 +13,20 @@ function AddProduct() {
     const handleSubmit = (event) => {
         event.preventDefault();
 
-        // Check if all fields are filled
-        if (!name || !price || !stocks) {
-            setError('All fields must be filled out.');
-            return; // Prevent form submission if fields are missing
+        // Validation for required fields
+        if (!name.trim()) {
+            setError('Product name is required.');
+            return;
+        }
+
+        if (isNaN(price) || Number(price) <= 0) {
+            setError('Price must be a positive number.');
+            return;
+        }
+
+        if (!Number.isInteger(Number(stocks)) || Number(stocks) < 0) {
+            setError('Stocks must be a non-negative integer.');
+            return;
         }
 
         const newProduct = { name, price, stocks };
@@ -31,8 +41,9 @@ function AddProduct() {
                 navigate('/'); // Redirect to product list after successful submission
             })
             .catch(error => {
-                console.error('Error adding product:', error);
+                // General error message for any other issues
                 setError('An error occurred while adding the product. Please try again.');
+                console.error('Error adding product:', error);
             });
     };
 
