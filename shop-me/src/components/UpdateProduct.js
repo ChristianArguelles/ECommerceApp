@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Button, Form, Container } from 'react-bootstrap';
+import { Button, Form, Container, Alert } from 'react-bootstrap';
 
 function UpdateProduct() {
     const { id } = useParams(); // Get product ID from the URL
     const [product, setProduct] = useState({ name: '', price: '', stocks: '' });
+    const [error, setError] = useState(''); // Error message state
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -22,18 +23,40 @@ function UpdateProduct() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        // Validation
+        if (!product.name.trim()) {
+            setError('Product name cannot be empty or blank.');
+            return;
+        }
+
+        if (Number(product.price) < 1) {
+            setError('Price must be at least 1.');
+            return;
+        }
+
+        if (Number(product.stocks) < 0 || !Number.isInteger(Number(product.stocks))) {
+            setError('Stocks must be a non-negative integer.');
+            return;
+        }
+
         // Submit the updated product data
         axios.put(`http://localhost:8000/api/products/${id}`, product)
             .then(() => {
                 console.log('Product updated successfully!');
+                setError(''); // Clear error if successful
                 navigate('/'); // Redirect to the product list after update
             })
-            .catch(error => console.error('Error updating product:', error));
+            .catch(error => {
+                console.error('Error updating product:', error);
+                setError('An error occurred while updating the product.');
+            });
     };
 
     return (
         <Container>
             <h1>Update Product</h1>
+            {error && <Alert variant="danger" className="mt-3">{error}</Alert>} {/* Display error message */}
             <Form onSubmit={handleSubmit}>
                 <Form.Group controlId="formName">
                     <Form.Label>Product Name</Form.Label>
@@ -45,7 +68,7 @@ function UpdateProduct() {
                         required
                     />
                 </Form.Group>
-                <Form.Group controlId="formPrice">
+                <Form.Group controlId="formPrice" className="mt-3">
                     <Form.Label>Price</Form.Label>
                     <Form.Control
                         type="number"
@@ -55,7 +78,7 @@ function UpdateProduct() {
                         required
                     />
                 </Form.Group>
-                <Form.Group controlId="formStocks">
+                <Form.Group controlId="formStocks" className="mt-3">
                     <Form.Label>Stocks</Form.Label>
                     <Form.Control
                         type="number"
@@ -65,7 +88,7 @@ function UpdateProduct() {
                         required
                     />
                 </Form.Group>
-                <Button variant="primary" type="submit" className="mt-3">
+                <Button variant="primary" type="submit" className="mt-4">
                     Update Product
                 </Button>
             </Form>
