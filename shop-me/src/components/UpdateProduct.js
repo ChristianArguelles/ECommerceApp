@@ -40,8 +40,15 @@ function UpdateProduct() {
             return;
         }
 
+        // Check for out of stock condition
+        //Add product status, pag zero out of stock
+        const updatedProduct = {
+            ...product,
+            status: Number(product.stocks) === 0 ? 'Out of Stock' : 'Available' // Set status based on stock
+        };
+
         // Submit the updated product data
-        axios.put(`http://localhost:8000/api/products/${id}`, product)
+        axios.put(`http://localhost:8000/api/products/${id}`, updatedProduct)
             .then(() => {
                 console.log('Product updated successfully!');
                 setError(''); // Clear error if successful

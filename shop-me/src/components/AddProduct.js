@@ -24,7 +24,7 @@ function AddProduct() {
             return;
         }
 
-        if (!Number.isInteger(Number(stocks)) || Number(stocks) < 0) {
+        if (!Number.isInteger(Number(stocks)) || Number(stocks) < 1) {
             setError('Stocks must be a non-negative integer.');
             return;
         }
