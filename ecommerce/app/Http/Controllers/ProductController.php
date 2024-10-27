@@ -36,10 +36,16 @@ class ProductController extends Controller
     }
     public function search(Request $request) {
         $query = $request->input('query');
-        $products = Product::where('name', 'LIKE', "%$query%")
-                            ->orWhere('description', 'LIKE', "%$query%")
-                            ->get();
-
-        return response()->json($products);
+    
+        // Find the product with an exact match on name or ID
+        $product = Product::where('name', $query)
+                          ->orWhere('id', $query)
+                          ->first();
+    
+        if ($product) {
+            return response()->json($product);
+        } else {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
     }
 }
