@@ -34,16 +34,20 @@ class ProductController extends Controller
         Product::destroy($id);
         return response()->json('Product deleted');
     }
-    public function search(Request $request) {
-        $query = $request->input('query');
-        $products = Product::where('name', 'LIKE', "%$query%")
-                           ->orWhere('description', 'LIKE', "%$query%")
-                           ->get();
+   public function search(Request $request)
+{
+    $query = $request->input('query');
+
+    // Search products by name or description
+    $products = Product::where('product name', 'LIKE', "%{$query}%")
+                        ->orWhere('product id', 'LIKE', "%{$query}%")
+                        ->get();
+
+    if ($products->isEmpty()) {
+        return response()->json(['message' => 'Product not found'], 404);
+    }
+
+    return response()->json($products);
+}
     
-        if ($products->isNotEmpty()) {
-            return response()->json($products); // Return matched products
-        } else {
-            return response()->json(['message' => 'Product not found'], 404); // Return 404 if no products found
-        }
-    }    
 }
