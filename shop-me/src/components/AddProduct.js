@@ -26,18 +26,18 @@ function AddProduct() {
         event.preventDefault();
 
         // Validation for required fields
-        if (!name.trim()) {
-            setError('Product name is required.');
+        if (!name.trim() || !price.trim() || !stocks.trim()) {
+            setError('All fields are required.');
             return;
         }
 
         if (isNaN(price) || Number(price) <= 0) {
-            setError('Price must be a positive number.');
+            setError('Price must be greater than zero.');
             return;
         }
 
         if (!Number.isInteger(Number(stocks)) || Number(stocks) < 1) {
-            setError('Stocks must be a non-negative integer.');
+            setError('Stocks must be greater than zero.');
             return;
         }
 
