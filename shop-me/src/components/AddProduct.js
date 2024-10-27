@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Button, Container, Form } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
@@ -8,7 +8,19 @@ function AddProduct() {
     const [price, setPrice] = useState('');
     const [stocks, setStocks] = useState('');
     const [error, setError] = useState('');
+    const [existingProducts, setExistingProducts] = useState([]); // State for storing existing products
     const navigate = useNavigate();
+
+    // Fetch existing products when the component mounts
+    useEffect(() => {
+        axios.get('http://localhost:8000/api/products')
+            .then(response => {
+                setExistingProducts(response.data.map(product => product.name.toLowerCase())); // Store product names in lowercase
+            })
+            .catch(error => {
+                console.error('Error fetching products:', error);
+            });
+    }, []);
 
     const handleSubmit = (event) => {
         event.preventDefault();
@@ -26,6 +38,12 @@ function AddProduct() {
 
         if (!Number.isInteger(Number(stocks)) || Number(stocks) < 1) {
             setError('Stocks must be a non-negative integer.');
+            return;
+        }
+
+        // Check if the product name already exists (case insensitive)
+        if (existingProducts.includes(name.toLowerCase())) {
+            setError('The product already exists.');
             return;
         }
 
