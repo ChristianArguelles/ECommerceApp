@@ -34,4 +34,12 @@ class ProductController extends Controller
         Product::destroy($id);
         return response()->json('Product deleted');
     }
+    public function search(Request $request) {
+        $query = $request->input('query');
+        $products = Product::where('name', 'LIKE', "%$query%")
+                            ->orWhere('description', 'LIKE', "%$query%")
+                            ->get();
+
+        return response()->json($products);
+    }
 }
