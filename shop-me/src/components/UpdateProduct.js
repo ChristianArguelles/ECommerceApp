@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Button, Form, Container, Alert } from 'react-bootstrap';
+import React, { useEffect, useState } from 'react';
+import { Alert, Button, Container, Form } from 'react-bootstrap';
+import { useNavigate, useParams } from 'react-router-dom';
 
 function UpdateProduct() {
     const { id } = useParams(); // Get product ID from the URL

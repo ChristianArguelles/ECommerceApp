@@ -5,37 +5,28 @@ import { Link } from 'react-router-dom';
 
 function ViewProduct({ searchTerm, triggerSearch }) {
     const [products, setProducts] = useState([]);
-    const [filteredProducts, setFilteredProducts] = useState([]);
+    const [loading, setLoading] = useState(true); // State to manage loading
 
     useEffect(() => {
-        // Fetch all products initially
-        axios.get('http://localhost:8000/api/products')
-            .then(response => {
+        const fetchProducts = async () => {
+            try {
+                const response = await axios.get('http://localhost:8000/api/products');
                 setProducts(response.data);
-                setFilteredProducts(response.data); // Initialize filtered products
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Error fetching data:', error);
-            });
-    }, []);
+            } finally {
+                setLoading(false); // Set loading to false once the fetch is complete
+            }
+        };
 
-    useEffect(() => {
-        if (triggerSearch) {
-            // Filter products only when search is triggered
-            const results = products.filter(product =>
-                product.name.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-            setFilteredProducts(results);
-        }
-    }, [searchTerm, triggerSearch, products]);
+        fetchProducts();
+    }, []);
 
     const handleDelete = (id) => {
         if (window.confirm('Are you sure you want to delete this product?')) {
             axios.delete(`http://localhost:8000/api/products/${id}`)
                 .then(() => {
-                    // After successful deletion, refresh the product list
-                    setProducts(products.filter(product => product.id !== id));
-                    setFilteredProducts(filteredProducts.filter(product => product.id !== id)); // Update filtered products
+                    setProducts(products.filter(product => product.id !== id)); // Update the product list
                     console.log('Product deleted:', id);
                 })
                 .catch(error => {
@@ -43,6 +34,11 @@ function ViewProduct({ searchTerm, triggerSearch }) {
                 });
         }
     };
+
+    // Filter products based on search term
+    const filteredProducts = triggerSearch
+        ? products.filter(product => product.name.toLowerCase().includes(searchTerm.toLowerCase()))
+        : products;
 
     return (
         <Container>
@@ -58,21 +54,23 @@ function ViewProduct({ searchTerm, triggerSearch }) {
                     </tr>
                 </thead>
                 <tbody>
-                    {filteredProducts.length > 0 ? (
+                    {loading ? ( // Show loading message while fetching
+                        <tr>
+                            <td colSpan="5" className="text-center">Loading...</td>
+                        </tr>
+                    ) : filteredProducts.length > 0 ? (
                         filteredProducts.map(product => (
                             <tr key={product.id}>
                                 <td>{product.id}</td>
                                 <td>{product.name}</td>
                                 <td>{product.price}</td>
-                                <td>{product.stocks}</td>
+                                <td>{product.stocks > 0 ? product.stocks : 'Out Of Stock'}</td> {/* Display 'Out Of Stock' if stocks are 0 */}
                                 <td>
-                                    {/* Navigate to update product page */}
                                     <Link to={`/update/${product.id}`}>
                                         <Button variant="secondary" className="me-2">
                                             Update
                                         </Button>
                                     </Link>
-                                    {/* Delete product */}
                                     <Button variant="danger" onClick={() => handleDelete(product.id)}>
                                         Delete
                                     </Button>
@@ -81,9 +79,7 @@ function ViewProduct({ searchTerm, triggerSearch }) {
                         ))
                     ) : (
                         <tr>
-                            <td colSpan="5" className="text-center">
-                                No "{searchTerm}" in the list.
-                            </td>
+                            <td colSpan="5" className="text-center">No products found.</td>
                         </tr>
                     )}
                 </tbody>
@@ -91,5 +87,6 @@ function ViewProduct({ searchTerm, triggerSearch }) {
         </Container>
     );
 }
+
 
 export default ViewProduct;
