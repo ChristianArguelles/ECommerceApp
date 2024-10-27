@@ -36,19 +36,14 @@ class ProductController extends Controller
     }
     public function search(Request $request) {
         $query = $request->input('query');
-    
-        // Search for products that match the query in name or description
         $products = Product::where('name', 'LIKE', "%$query%")
-                            ->orWhere('description', 'LIKE', "%$query%")
-                            ->get();
+                           ->orWhere('description', 'LIKE', "%$query%")
+                           ->get();
     
-        // Check if any products were found
         if ($products->isNotEmpty()) {
-            return response()->json($products);  // Return the list of found products
+            return response()->json($products); // Return matched products
         } else {
-            return response()->json(['message' => 'Product not found'], 404);  // Product not found message
+            return response()->json(['message' => 'Product not found'], 404); // Return 404 if no products found
         }
-    }
-    
-
+    }    
 }
