@@ -7,47 +7,85 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
+    // Retrieve All Products
     public function index() {
-        return Product::all();
+        return response()->json(Product::all(), 200);
     }
 
+    // Add New Product
     public function store(Request $request) {
-        $product = Product::create([
-            'name' => $request->name,
-            'price' => $request->price,
-            'stocks' => $request->stocks,
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'stocks' => 'required|integer|min:0',
         ]);
-        return response()->json($product);
+
+        $product = Product::create($validated);
+
+        return response()->json(['message' => 'Product created successfully', 'product' => $product], 201);
     }
 
+    // Show Single Product
     public function show($id) {
-        return Product::find($id);
+        $product = Product::find($id);
+
+        if (!$product) {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+
+        return response()->json($product, 200);
     }
 
+    // Update Product
     public function update(Request $request, $id) {
         $product = Product::find($id);
-        $product->update($request->all());
-        return response()->json($product);
+
+        if (!$product) {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'price' => 'sometimes|required|numeric|min:0',
+            'stocks' => 'sometimes|required|integer|min:0',
+        ]);
+
+        $product->update($validated);
+
+        return response()->json(['message' => 'Product updated successfully', 'product' => $product], 200);
     }
 
+    // Delete Product
     public function destroy($id) {
-        Product::destroy($id);
-        return response()->json('Product deleted');
-    }
-   public function search(Request $request)
-{
-    $query = $request->input('query');
+        $product = Product::find($id);
 
-    // Search products by name or description
-    $products = Product::where('product name', 'LIKE', "%{$query}%")
-                        ->orWhere('product id', 'LIKE', "%{$query}%")
-                        ->get();
+        if (!$product) {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
 
-    if ($products->isEmpty()) {
-        return response()->json(['message' => 'Product not found'], 404);
+        $product->delete();
+
+        return response()->json(['message' => 'Product deleted successfully'], 200);
     }
 
-    return response()->json($products);
-}
-    
+    // Search Products by Name or ID
+    public function search(Request $request) {
+        $query = $request->input('query');
+
+        // Validate the query
+        if (!$query) {
+            return response()->json(['message' => 'Search query is required'], 400);
+        }
+
+        // Perform the search
+        $products = Product::where('name', 'LIKE', "%{$query}%")
+                           ->orWhere('id', 'LIKE', "%{$query}%")
+                           ->get();
+
+        if ($products->isEmpty()) {
+            return response()->json(['message' => 'No matching products found'], 404);
+        }
+
+        return response()->json($products, 200);
+    }
 }
