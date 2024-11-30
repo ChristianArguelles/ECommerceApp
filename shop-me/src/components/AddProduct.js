@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Button, Container, Form } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
@@ -8,15 +8,43 @@ function AddProduct() {
     const [price, setPrice] = useState('');
     const [stocks, setStocks] = useState('');
     const [error, setError] = useState('');
+    const [existingProducts, setExistingProducts] = useState([]); // State for storing existing products
     const navigate = useNavigate();
+
+    // Fetch existing products when the component mounts
+    useEffect(() => {
+        axios.get('http://localhost:8000/api/products')
+            .then(response => {
+                setExistingProducts(response.data.map(product => product.name.toLowerCase())); // Store product names in lowercase
+            })
+            .catch(error => {
+                console.error('Error fetching products:', error);
+            });
+    }, []);
 
     const handleSubmit = (event) => {
         event.preventDefault();
 
-        // Check if all fields are filled
-        if (!name || !price || !stocks) {
-            setError('All fields must be filled out.');
-            return; // Prevent form submission if fields are missing
+        // Validation for required fields
+        if (!name.trim() || !price.trim() || !stocks.trim()) {
+            setError('All fields are required.');
+            return;
+        }
+
+        if (isNaN(price) || Number(price) <= 0) {
+            setError('Price must be greater than zero.');
+            return;
+        }
+
+        if (!Number.isInteger(Number(stocks)) || Number(stocks) < 1) {
+            setError('Stocks must be greater than zero.');
+            return;
+        }
+
+        // Check if the product name already exists (case insensitive)
+        if (existingProducts.includes(name.toLowerCase())) {
+            setError('The product already exists.');
+            return;
         }
 
         const newProduct = { name, price, stocks };
@@ -31,8 +59,9 @@ function AddProduct() {
                 navigate('/'); // Redirect to product list after successful submission
             })
             .catch(error => {
-                console.error('Error adding product:', error);
+                // General error message for any other issues
                 setError('An error occurred while adding the product. Please try again.');
+                console.error('Error adding product:', error);
             });
     };
 

@@ -1,28 +1,32 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { Button, Container, Table } from 'react-bootstrap';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
-function ViewProduct() {
+function ViewProduct({ searchTerm, triggerSearch }) {
     const [products, setProducts] = useState([]);
-    //const navigate = useNavigate(); 
+    const [loading, setLoading] = useState(true); // State to manage loading
 
     useEffect(() => {
-        axios.get('http://localhost:8000/api/products')
-            .then(response => {
+        const fetchProducts = async () => {
+            try {
+                const response = await axios.get('http://localhost:8000/api/products');
                 setProducts(response.data);
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Error fetching data:', error);
-            });
+            } finally {
+                setLoading(false); // Set loading to false once the fetch is complete
+            }
+        };
+
+        fetchProducts();
     }, []);
 
     const handleDelete = (id) => {
         if (window.confirm('Are you sure you want to delete this product?')) {
             axios.delete(`http://localhost:8000/api/products/${id}`)
                 .then(() => {
-                    // After successful deletion, refresh the product list
-                    setProducts(products.filter(product => product.id !== id));
+                    setProducts(products.filter(product => product.id !== id)); // Update the product list
                     console.log('Product deleted:', id);
                 })
                 .catch(error => {
@@ -30,6 +34,11 @@ function ViewProduct() {
                 });
         }
     };
+
+    // Filter products based on search term
+    const filteredProducts = triggerSearch
+        ? products.filter(product => product.name.toLowerCase().includes(searchTerm.toLowerCase()))
+        : products;
 
     return (
         <Container>
@@ -45,33 +54,39 @@ function ViewProduct() {
                     </tr>
                 </thead>
                 <tbody>
-                    {products.map(product => (
-                        <tr key={product.id}>
-                            <td>{product.id}</td>
-                            <td>{product.name}</td>
-                            <td>{product.price}</td>
-                            <td>{product.stocks}</td>
-                            <td>
-                                <Button variant="primary" className="me-2" onClick={() => console.log('Add to Cart')}>
-                                    Add to Cart
-                                </Button>
-                                {/* Navigate to update product page */}
-                                <Link to={`/update/${product.id}`}>
-                                    <Button variant="secondary" className="me-2">
-                                        Update
-                                    </Button>
-                                </Link>
-                                {/* Delete product */}
-                                <Button variant="danger" onClick={() => handleDelete(product.id)}>
-                                    Delete
-                                </Button>
-                            </td>
+                    {loading ? ( // Show loading message while fetching
+                        <tr>
+                            <td colSpan="5" className="text-center">Loading...</td>
                         </tr>
-                    ))}
+                    ) : filteredProducts.length > 0 ? (
+                        filteredProducts.map(product => (
+                            <tr key={product.id}>
+                                <td>{product.id}</td>
+                                <td>{product.name}</td>
+                                <td>{product.price}</td>
+                                <td>{product.stocks > 0 ? product.stocks : 'Out Of Stock'}</td> {/* Display 'Out Of Stock' if stocks are 0 */}
+                                <td>
+                                    <Link to={`/update/${product.id}`}>
+                                        <Button variant="secondary" className="me-2">
+                                            Update
+                                        </Button>
+                                    </Link>
+                                    <Button variant="danger" onClick={() => handleDelete(product.id)}>
+                                        Delete
+                                    </Button>
+                                </td>
+                            </tr>
+                        ))
+                    ) : (
+                        <tr>
+                            <td colSpan="5" className="text-center">No products found.</td>
+                        </tr>
+                    )}
                 </tbody>
             </Table>
         </Container>
     );
 }
+
 
 export default ViewProduct;
