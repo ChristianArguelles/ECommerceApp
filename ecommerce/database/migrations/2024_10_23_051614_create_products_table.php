@@ -13,9 +13,12 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->decimal('price', 8, 2);
-            $table->integer('stocks');
+            $table->string('barcode')->unique(); // Unique barcode for products
+            $table->string('name'); // Product name
+            $table->text('description')->nullable(); // Optional product description
+            $table->decimal('price', 8, 2); // Product price
+            $table->integer('stocks'); // Available quantity
+            $table->string('category'); // Product category
             $table->timestamps();
         });
     }

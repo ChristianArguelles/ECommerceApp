@@ -13,10 +13,11 @@ return new class extends Migration
     {
         Schema::create('carts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('product_id')->constrained()->onDelete('cascade');
-            $table->integer('quantity');
-            $table->decimal('total_price', 10, 2);
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // Link to users table
+            $table->foreignId('product_id')->constrained('products')->onDelete('cascade'); // Link to products table
+            $table->integer('quantity')->default(1); // Default quantity set to 1
+            $table->decimal('total_price', 10, 2); // Total price for the quantity
+            $table->string('status')->default('pending'); // Optional: status to track cart processing ('pending', 'checked out')
             $table->timestamps();
         });
     }

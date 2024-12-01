@@ -10,8 +10,11 @@ class Product extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name',
-        'price',
-        'stocks',
+        'barcode',      // Unique identifier for the product
+        'name',         // Product name
+        'description',  // Detailed description of the product
+        'price',        // Product price
+        'stocks',       // Available quantity of the product
+        'category',     // Category the product belongs to
     ];
 }
