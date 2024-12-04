@@ -2,15 +2,14 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens; // Ensure you're using Sanctum if you're using API tokens
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasApiTokens; // Use HasApiTokens to allow token authentication
 
     /**
      * The attributes that are mass assignable.
@@ -21,6 +20,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role', // Include role in the fillable array if it's being mass-assigned
     ];
 
     /**
@@ -34,16 +34,33 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
      * @return array<string, string>
      */
-    protected function casts(): array
+    protected $casts = [
+        'email_verified_at' => 'datetime', 
+        'password' => 'hashed', // Ensure password is treated as a hashed string
+        'role' => 'string', // Ensure role is treated as a string
+    ];
+
+    /**
+     * Automatically hash the password when creating/updating the user.
+     */
+    public static function boot()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'role' => 'string',
-        ];
+        parent::boot();
+
+        static::creating(function ($user) {
+            if ($user->password) {
+                $user->password = bcrypt($user->password); // Automatically hash password
+            }
+        });
+
+        static::updating(function ($user) {
+            if ($user->password) {
+                $user->password = bcrypt($user->password); // Hash the password when updating
+            }
+        });
     }
 }
