@@ -1,25 +1,36 @@
-// src/components/Login.js
 import React, { useState } from 'react';
 import { Alert, Button, Container, Form } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { loginUser } from '../mockUserData'; // Adjust the import path
+import axios from 'axios';
 
 function Login({ setIsLoggedIn }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [role, setRole] = useState('customer'); // Add role state
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
         try {
-            const user = loginUser(email, password);
-            localStorage.setItem('token', 'your_token'); // Simulate storing a token
+            const response = await axios.post('http://localhost:8000/api/login', {
+                email,
+                password
+            });
+
+            const { token, user } = response.data;
+            localStorage.setItem('token', token); // Store the token
             setIsLoggedIn(true); // Set logged-in state to true
-            console.log('Login successful for', user.email);
-            navigate('/'); // Redirect to the main application
+            console.log('Login successful for', email);
+
+            // Redirect based on user role
+            if (user.role === 'customer') {
+                navigate('/products'); // Redirect to the product list
+            } else if (user.role === 'admin') {
+                navigate('/admin'); // Redirect to the admin dashboard
+            }
         } catch (error) {
-            setError(error.message); // Set the error message from the login attempt
+            setError('Invalid email or password'); // Set the error message
         }
     };
 
@@ -47,6 +58,18 @@ function Login({ setIsLoggedIn }) {
                         onChange={(e) => setPassword(e.target.value)} 
                         required
                     />
+                </Form.Group>
+                <Form.Group controlId="formRole" className="mt-3">
+                    <Form.Label>Role</Form.Label>
+                    <Form.Control 
+                        as="select" 
+                        value={role} 
+                        onChange={(e) => setRole(e.target.value)} 
+                        required
+                    >
+                        <option value="customer">Customer</option>
+                        <option value="admin">Admin</option>
+                    </Form.Control>
                 </Form.Group>
                 <Button variant="primary" type="submit" className="mt-4">
                     Login
