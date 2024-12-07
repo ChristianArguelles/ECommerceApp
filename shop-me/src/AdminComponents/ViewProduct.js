@@ -15,7 +15,7 @@ function View() {
     const fetchProductDetails = async () => {
       setLoading(true);
       try {
-        const response = await fetch("http://localhost:8000/api/product/${id})";
+        const response = await fetch("http://localhost:8000/api/product/${id}");
         if (!response.ok) {
           throw new Error('Failed to fetch product details');
         }
