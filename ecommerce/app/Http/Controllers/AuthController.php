@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -15,37 +15,43 @@ class AuthController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function register(Request $request)
-    {
-        // Validate incoming request
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed', // Password confirmation validation
-        ]);
+public function register(Request $request)
+{
+    Log::info('Register request received: ' . json_encode($request->all()));
+    // Validate incoming request
+    $validator = Validator::make($request->all(), [
+        'name' => 'required|string|max:255',
+        'email' => 'required|string|email|max:255|unique:users',
+        'password' => 'required|string|min:8',
+        'confirm_password' => 'required|string|same:password', // Password confirmation validation
+        'role' => 'required|string|in:user,admin', // Role validation
+    ]);
 
-        if ($validator->fails()) {
-            return response(['errors' => $validator->errors()->all()], 422);
-        }
+    if ($validator->fails()) {
+        Log::error('Validation failed: ' . json_encode($validator->errors()->all()));
+        return response(['errors' => $validator->errors()->all()], 422);
+    }
 
         // Create user
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
-            // Assigning default role 'user' during registration (You can modify this if you want to assign roles based on other criteria)
-            'role' => 'user', // Assuming the user model has a 'role' field
+            'password' => $request->password, // Password is stored without hashing
+            'role' => $request->role, // Store the role
         ]);
 
         // Generate API token
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        // Return response with user data, token, and token type
+        // Log token for debugging
+        Log::info('Generated token: ' . $token);
+
+        // Return response with user data and token
         return response([
             'data' => $user,
             'access_token' => $token,
             'token_type' => 'Bearer',
-        ], 201);
+        ], 201)->header('Location', '/login');
     }
 
     /**
@@ -59,22 +65,74 @@ class AuthController extends Controller
         // Validate login credentials
         $credentials = $request->only('email', 'password');
         
-        if (!auth()->attempt($credentials)) {
+        if (!$this->validateCredentials($credentials)) {
             return response(['message' => 'Invalid login details'], 401);
         }
 
         // Get authenticated user
-        $user = auth()->user();
+        $user = User::where('email', $credentials['email'])->first();
 
-        // Generate token for the authenticated user
+        // Generate token
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        // Return response with welcome message, user data, and access token
+        // Return response
         return response([
-            'message' => 'Hi ' . $user->name . ', welcome to home!',
-            'user' => $user, // You can return additional user data here if needed
+            'message' => 'Hi ' . $user->name . ', welcome back!',
+            'user' => $user,
             'access_token' => $token,
             'token_type' => 'Bearer',
         ], 200);
+    }
+
+    /**
+     * Admin login and return an access token.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function adminLogin(Request $request)
+    {
+        // Validate login credentials
+        $credentials = $request->only('email', 'password');
+        
+        if (!$this->validateCredentials($credentials)) {
+            return response(['message' => 'Invalid login details'], 401);
+        }
+
+        // Get authenticated user
+        $user = User::where('email', $credentials['email'])->first();
+
+        // Check if the user is an admin
+        if ($user->role !== 'admin') {
+            return response(['message' => 'Unauthorized'], 403);
+        }
+
+        // Generate token
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        // Return response
+        return response([
+            'message' => 'Hi ' . $user->name . ', welcome back!',
+            'user' => $user,
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+        ], 200);
+    }
+
+    /**
+     * Validate user credentials.
+     *
+     * @param  array  $credentials
+     * @return bool
+     */
+    private function validateCredentials(array $credentials)
+    {
+        $user = User::where('email', $credentials['email'])->first();
+
+        if ($user && $user->password === $credentials['password']) {
+            return true;
+        }
+
+        return false;
     }
 }

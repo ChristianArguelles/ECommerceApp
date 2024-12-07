@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -13,13 +12,23 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Check if the customer already exists
+        $existingCustomer = User::where('email', 'customer@example.com')->first();
 
-        User::factory()->create([
-            'name' => 'Test Customer',
-            'email' => 'customer@example.com',
-            'password' => 'password',
-            'role' => 'customer', // Assuming you have a role field
-        ]);
+        if (!$existingCustomer) {
+            // If no customer exists with this email, create one
+            User::create([
+                'name' => 'Test Customer',
+                'email' => 'customer@example.com',
+                'password' => bcrypt('password'), // Always hash the password
+                'role' => 'customer', // Assuming you have a role field
+            ]);
+            echo "Test customer created successfully.\n";
+        } else {
+            echo "Customer with email 'customer@example.com' already exists.\n";
+        }
+
+        // You can also seed other tables or use factories here
+        // User::factory(10)->create();
     }
 }
