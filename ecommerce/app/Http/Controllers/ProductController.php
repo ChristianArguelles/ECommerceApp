@@ -138,4 +138,14 @@ class ProductController extends Controller
 
         return response()->json($products, 200);
     }
+    public function search(Request $request) {
+        $query = $request->input('query');
+        $products = Product::where('name', 'LIKE', "%$query%")
+                            ->orWhere('description', 'LIKE', "%$query%")
+                            ->get();
+
+        return response()->json($products);
+    } //search
 }
+
+
