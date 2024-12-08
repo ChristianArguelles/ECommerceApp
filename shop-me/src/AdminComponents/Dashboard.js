@@ -278,7 +278,7 @@ const Dashboard = () => {
         </table>
       )}
       {!loading && !error && filteredProducts.length === 0 && (
-        <p style={{ fontSize: '18px', color: '#666', textAlign: 'center' }}>No products found.</p>
+        <p style={{ fontSize: '18px', color: '#666', textAlign: 'center' }}>No products found</p>
       )}
     </div>
   );
