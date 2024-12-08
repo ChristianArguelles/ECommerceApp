@@ -1,5 +1,3 @@
-//Dashboard.js
-
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -11,11 +9,15 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [stockStatus, setStockStatus] = useState('all');
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/product');
+        const response = await fetch('http://localhost:8000/api/products');
         if (!response.ok) {
           throw new Error('Failed to fetch products');
         }
@@ -40,23 +42,25 @@ const Dashboard = () => {
   }, []);
 
   const handleSearch = () => {
-    if (searchBy === 'all') {
-      setFilteredProducts(products); // Show all products
-    } else if (searchBy === 'name') {
-      setFilteredProducts(
-        products.filter((product) =>
-          product.name.toLowerCase().includes(searchTerm.toLowerCase())
-        )
+    let filtered = [...products];
+
+    if (searchBy === 'name') {
+      filtered = filtered.filter((product) =>
+        product.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
-    } else if (searchBy === 'category') {
-      setFilteredProducts(products.filter((product) => product.category === searchTerm));
     }
+
+    if (searchBy === 'category' && searchTerm) {
+      filtered = filtered.filter((product) => product.category === searchTerm);
+    }
+
+    setFilteredProducts(filtered);
   };
 
   const handleDelete = (id) => {
     const confirmDelete = window.confirm('Are you sure you want to delete this product?');
     if (confirmDelete) {
-      fetch('http://localhost:8000/api/product/' + id, { method: 'DELETE' })
+      fetch('http://localhost:8000/api/products/' + id, { method: 'DELETE' })
         .then((response) => response.json())
         .then(() => {
           setProducts(products.filter((product) => product.id !== id));
@@ -64,6 +68,40 @@ const Dashboard = () => {
         })
         .catch((err) => setError('Failed to delete product'));
     }
+  };
+
+  const applyFilters = () => {
+    let filtered = [...products];
+
+    // Price Filter
+    if (minPrice) {
+      filtered = filtered.filter((product) => product.price >= minPrice);
+    }
+    if (maxPrice) {
+      filtered = filtered.filter((product) => product.price <= maxPrice);
+    }
+
+    // Category Filter
+    if (selectedCategory) {
+      filtered = filtered.filter((product) => product.category === selectedCategory);
+    }
+
+    // Stock Filter
+    if (stockStatus === 'inStock') {
+      filtered = filtered.filter((product) => product.stocks > 0);
+    } else if (stockStatus === 'outOfStock') {
+      filtered = filtered.filter((product) => product.stocks === 0);
+    }
+
+    setFilteredProducts(filtered);
+  };
+
+  const resetFilters = () => {
+    setMinPrice('');
+    setMaxPrice('');
+    setSelectedCategory('');
+    setStockStatus('all');
+    setFilteredProducts(products);
   };
 
   return (
@@ -94,94 +132,70 @@ const Dashboard = () => {
         </Link>
       </div>
 
-      {/* Search Section */}
-      <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <div>
-          <label>
-            <input
-              type="radio"
-              name="searchBy"
-              value="all"
-              checked={searchBy === 'all'}
-              onChange={() => {
-                setSearchBy('all');
-                setSearchTerm('');
-                handleSearch(); // Show all products 
-              }}
-            />
-            Show All
-          </label>
-          <label style={{ marginLeft: '10px' }}>
-            <input
-              type="radio"
-              name="searchBy"
-              value="name"
-              checked={searchBy === 'name'}
-              onChange={() => {
-                setSearchBy('name');
-                setSearchTerm('');
-              }}
-            />
-            Search by Name
-          </label>
-          <label style={{ marginLeft: '10px' }}>
-            <input
-              type="radio"
-              name="searchBy"
-              value="category"
-              checked={searchBy === 'category'}
-              onChange={() => {
-                setSearchBy('category');
-                setSearchTerm('');
-              }}
-            />
-            Search by Category
-          </label>
-        </div>
-
-        {searchBy === 'name' && (
-          <input
-            type="text"
-            placeholder="Search by name"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
-          />
-        )}
-        {searchBy === 'category' && (
-          <select
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
-          >
-            <option value="">Select Category</option>
-            {categories.map((category, index) => (
-              <option key={index} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
-        )}
-
-        {searchBy !== 'all' && (
-          <button
-            onClick={handleSearch}
-            style={{
-              padding: '8px 15px',
-              backgroundColor: '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
-            Search
-          </button>
-        )}
-      </div>
-
       {loading && <p style={{ fontSize: '18px', color: '#666' }}>Loading products...</p>}
       {error && <p style={{ fontSize: '18px', color: 'red' }}>{error}</p>}
+
+      {/* Search and Filter Section */}
+      <div style={{ marginBottom: '20px' }}>
+        <input
+          type="text"
+          placeholder="Search by name"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyUp={handleSearch}
+          style={{
+            padding: '8px',
+            marginRight: '10px',
+            borderRadius: '4px',
+            border: '1px solid #ddd',
+          }}
+        />
+        <select
+          value={searchBy}
+          onChange={(e) => setSearchBy(e.target.value)}
+          style={{
+            padding: '8px',
+            marginRight: '10px',
+            borderRadius: '4px',
+            border: '1px solid #ddd',
+          }}
+        >
+          <option value="all">All</option>
+          <option value="name">By Name</option>
+          <option value="category">By Category</option>
+        </select>
+
+        <button
+          onClick={applyFilters}
+          style={{
+            padding: '8px 15px',
+            backgroundColor: '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            marginRight: '10px',
+          }}
+        >
+          Apply Filters
+        </button>
+
+        <button
+          onClick={resetFilters}
+          style={{
+            padding: '8px 15px',
+            backgroundColor: '#f44336',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+          }}
+        >
+          Reset Filters
+        </button>
+      </div>
+
+      {/* Products Table */}
       {!loading && !error && filteredProducts.length > 0 && (
         <table
           style={{
@@ -196,6 +210,7 @@ const Dashboard = () => {
               <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'center' }}>Barcode</th>
               <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'center' }}>Name</th>
               <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'center' }}>Price</th>
+              <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'center' }}>Category</th>
               <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'center' }}>Stock</th>
               <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'center', width: '230px' }}>Actions</th>
             </tr>
@@ -206,7 +221,12 @@ const Dashboard = () => {
                 <td style={{ padding: '12px', textAlign: 'center' }}>{product.barcode}</td>
                 <td style={{ padding: '12px', textAlign: 'center' }}>{product.name}</td>
                 <td style={{ padding: '12px', textAlign: 'center' }}>${parseFloat(product.price).toFixed(2)}</td>
-                <td style={{ padding: '12px', textAlign: 'center' }}>{product.quantity}</td>
+                <td style={{ padding: '12px', textAlign: 'center' }}>{product.category || 'Uncategorized'}</td>
+                <td style={{ padding: '12px', textAlign: 'center' }}>
+                  {product.stocks !== null && product.stocks !== undefined
+                    ? product.stocks
+                    : 'N/A'}
+                </td>
                 <td style={{ padding: '12px', textAlign: 'center', width: '150px' }}>
                   <Link to={`/edit-product/${product.id}`}>
                     <button

@@ -5,6 +5,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\AdminController;
+
+
 
 // Public Routes
 Route::get('/products', [ProductController::class, 'index']); 
